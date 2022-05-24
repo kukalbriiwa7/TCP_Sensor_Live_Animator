@@ -44,7 +44,7 @@ class TCPServer(socket.socket):
             try:
                 print('connection from', client_address)
                 while True and not self.stop_requested:
-                    data = connection.recv(30)
+                    data = connection.recv(20)
                     if data:
                         self.parse_data(data)
             finally:
@@ -58,7 +58,7 @@ class TCPServer(socket.socket):
         global previous_guide_pos
         global start_time
         global already_go_ahead
-        print("byte: ", data)
+        # print("byte: ", data)
         data = data.decode().split(";")
         # print("decoded: ", data)
         # if  not already_go_ahead and len(data) == 1:
@@ -122,9 +122,9 @@ class Drawer():
         self.ax.tick_params(
             axis='both', which='both', bottom=False, top=False, labelbottom=False, right=False, left=False, labelleft=False)
 
-        self.bounding_box = plt.Rectangle((5, 24), 40, 5, ec='y', fc='none')
-        self.periodic_box = plt.Rectangle((25, 24), 0, 5, fc='r')
-        self.cursor_line = plt.Line2D([25,25], [24,29], color='k', lw=2)
+        self.bounding_box = plt.Rectangle((5, 20), 40, 5, ec='y', fc='none')
+        self.periodic_box = plt.Rectangle((25, 20), 0, 5, fc='r')
+        self.cursor_line = plt.Line2D([25,25], [20,25], color='k', lw=2)
         self.ax.add_patch(self.bounding_box)
         self.ax.add_patch(self.periodic_box)
         self.ax.add_line(self.cursor_line)
