@@ -1,3 +1,4 @@
+from re import T
 import socket
 import sys
 from textwrap import fill
@@ -125,11 +126,11 @@ class Drawer():
         t = time.time() - self.start_time
         # self.periodic_box.set_width(self.bounding_box.get_width() / 2 * np.sin(2 * np.pi * t * FREQUENCY))
         if self.dia_1 == True:
-            self.guide_circle.set_center((25 + guide_position, 22.5 + guide_position))
+            self.guide_circle.set_center((25 + 10*math.sqrt(2)*(guide_position/20), 22.5 + 10*math.sqrt(2)*(guide_position/20)))
             self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z)) 
 
         elif self.dia_2 == True:
-            self.guide_circle.set_center((25 + guide_position, 22.5 - guide_position))
+            self.guide_circle.set_center((25 + 10*math.sqrt(2)*(guide_position/20), 22.5 - 10*math.sqrt(2)*(guide_position/20)))
             self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z))
 
         elif self.cir_cw == True:
@@ -173,7 +174,7 @@ class Drawer():
             self.ax.add_line(self.horizontal_line)
             self.ax.add_line(self.vertical_line)
             self.ax.add_patch(self.cursor_circle)
-            self.diagonal_line_1 = plt.Line2D([25-20,25+20],[22.5-20,22.5+20], color='k', linestyle='--')
+            self.diagonal_line_1 = plt.Line2D([25-10*math.sqrt(2),25+10*math.sqrt(2)],[22.5-10*math.sqrt(2),22.5+10*math.sqrt(2)], color='k', linestyle='--')
             self.ax.add_line(self.diagonal_line_1)
             self.guide_circle = plt.Circle((25,22.5), 3, color='k', fill=False)
             self.ax.add_patch(self.guide_circle)
@@ -187,7 +188,7 @@ class Drawer():
             self.ax.add_line(self.horizontal_line)
             self.ax.add_line(self.vertical_line)
             self.ax.add_patch(self.cursor_circle)
-            self.diagonal_line_2 = plt.Line2D([25-20,25+20],[22.5+20,22.5-20], color='k', linestyle='--')
+            self.diagonal_line_2 = plt.Line2D([25-10*math.sqrt(2),25+10*math.sqrt(2)],[22.5+10*math.sqrt(2),22.5-10*math.sqrt(2)], color='k', linestyle='--')
             self.ax.add_line(self.diagonal_line_2)
             self.guide_circle = plt.Circle((25,22.5), 3, color='k', fill=False)
             self.ax.add_patch(self.guide_circle)
@@ -259,7 +260,7 @@ if __name__ == '__main__':
     server = TCPServer(HOST, PORT)
     server.setup_connection()
     server.start_reading()
-    drawer = Drawer(guide_direction='vertical')
+    drawer = Drawer(guide_direction='vertical',diameter_2=True)
     drawer.start_animation()
     drawer.close()
     server.close()
