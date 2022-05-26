@@ -108,7 +108,8 @@ class Drawer():
         self.dia_1 = diameter_1
         self.dia_2 = diameter_2
         self.cir_cw = circular_cw
-        self.cir_ccw = circular_ccw                  
+        self.cir_ccw = circular_ccw
+        self.circular_motions_radius = 10 * math.sqrt(2);              
         pass
 
     def start_animation(self):
@@ -134,11 +135,11 @@ class Drawer():
             self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z))
 
         elif self.cir_cw == True:
-            self.guide_circle.set_center((25 + 15*np.cos(2 * np.pi * t * FREQUENCY), 22.5 + 15*np.sin(2 * np.pi * t * FREQUENCY)))
+            self.guide_circle.set_center((25 + self.circular_motions_radius*np.cos(2 * np.pi * t * FREQUENCY), 22.5 + self.circular_motions_radius*np.sin(2 * np.pi * t * FREQUENCY)))
             self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z))     
 
         elif self.cir_ccw == True:
-            self.guide_circle.set_center((25 + 15*np.cos(-2 * np.pi * t * FREQUENCY), 22.5 + 15*np.sin(-2 * np.pi * t * FREQUENCY)))
+            self.guide_circle.set_center((25 + self.circular_motions_radius*np.cos(-2 * np.pi * t * FREQUENCY), 22.5 + self.circular_motions_radius*np.sin(-2 * np.pi * t * FREQUENCY)))
             self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z)) 
 
         elif self.dir == 'horizontal':
@@ -202,9 +203,11 @@ class Drawer():
             self.ax.add_line(self.horizontal_line)
             self.ax.add_line(self.vertical_line)
             self.ax.add_patch(self.cursor_circle)
-            self.path_circle = plt.Circle((25,22.5), 15, color='k', fill=False, linestyle='--')
+            # self.path_circle = plt.Circle((25,22.5), 15, color='k', fill=False, linestyle='--')
+            self.path_circle = plt.Circle((25,22.5), self.circular_motions_radius, color='k', fill=False, linestyle='--')
             self.ax.add_patch(self.path_circle)
-            self.guide_circle = plt.Circle((25+15,22.5), 3, color='k', fill=False)
+            # self.guide_circle = plt.Circle((25+15,22.5), 3, color='k', fill=False)
+            self.guide_circle = plt.Circle((25+self.circular_motions_radius,22.5), 3, color='k', fill=False)
             self.ax.add_patch(self.guide_circle)
 
         elif self.cir_ccw == True:
@@ -216,9 +219,11 @@ class Drawer():
             self.ax.add_line(self.horizontal_line)
             self.ax.add_line(self.vertical_line)
             self.ax.add_patch(self.cursor_circle)
-            self.path_circle = plt.Circle((25,22.5), 15, color='k', fill=False, linestyle='--')
+            # self.path_circle = plt.Circle((25,22.5), 15, color='k', fill=False, linestyle='--')
+            self.path_circle = plt.Circle((25,22.5), self.circular_motions_radius, color='k', fill=False, linestyle='--')
             self.ax.add_patch(self.path_circle)
-            self.guide_circle = plt.Circle((25+15,22.5), 3, color='k', fill=False)
+            # self.guide_circle = plt.Circle((25+15,22.5), 3, color='k', fill=False)
+            self.guide_circle = plt.Circle((25+self.circular_motions_radius,22.5), 3, color='k', fill=False)
             self.ax.add_patch(self.guide_circle)
 
         elif self.dir == 'horizontal':    
@@ -230,6 +235,7 @@ class Drawer():
             self.guide_line = plt.Line2D([25,25], [19,26], color='r', lw=2)
             self.cursor_circle = plt.Circle((25,22.5), 2, color='b')
             # self.guide_circle = plt.Circle((25,22.5), 15, color='k', fill=False, linestyle='--')
+            self.path_circle = plt.Circle((25,22.5), self.circular_motions_radius, color='k', fill=False, linestyle='--')
             self.ax.add_patch(self.periodic_box)
             self.ax.add_line(self.horizontal_line)
             self.ax.add_line(self.vertical_line)
@@ -260,7 +266,7 @@ if __name__ == '__main__':
     server = TCPServer(HOST, PORT)
     server.setup_connection()
     server.start_reading()
-    drawer = Drawer(guide_direction='vertical',diameter_2=True)
+    drawer = Drawer(guide_direction='horizontal')
     drawer.start_animation()
     drawer.close()
     server.close()
