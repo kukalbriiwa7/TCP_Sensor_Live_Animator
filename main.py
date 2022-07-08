@@ -14,8 +14,6 @@ import math
 # Switch matplotlib backend to Qt5Agg
 matplotlib.use('Qt5Agg')
 
-
-
 HOST = "192.168.1.15" 
 PORT = 8001
 FREQUENCY = 0.15
@@ -23,6 +21,8 @@ FREQUENCY = 0.15
 robot_position_x = 0
 robot_position_z = 0
 guide_position = 0
+angular_guide_position = 0
+eul_1 = 0
 previous_robot_pos_x = 0
 previous_robot_pos_z = 0
 previous_guide_pos = 0
@@ -32,7 +32,6 @@ already_go_ahead = False
 
 class TCPServer(socket.socket):
 
-    
     def __init__(self, host, port):
         super().__init__(socket.AF_INET, socket.SOCK_STREAM)
         self.host = host
@@ -55,7 +54,7 @@ class TCPServer(socket.socket):
             try:
                 print('connection from', client_address)
                 while True and not self.stop_requested:
-                    data = connection.recv(30)
+                    data = connection.recv(40)
                     if data:
                         self.parse_data(data)
             finally:
@@ -65,10 +64,14 @@ class TCPServer(socket.socket):
         global robot_position_x
         global robot_position_z
         global guide_position
+        global angular_guide_position
+        global eul_1
         global goaheadflag
         global previous_robot_pos_x
         global previous_robot_pos_z
         global previous_guide_pos
+        global previous_eul_1
+        global previous_angular_guide_position
         global start_time
         global already_go_ahead
         # print("byte: ", data)
@@ -82,10 +85,14 @@ class TCPServer(socket.socket):
         try:
             robot_position_x = float(data[1])
             robot_position_z = float(data[2])
-            guide_position = float(data[3])
+            eul_1 = -float(data[3])
+            guide_position = float(data[4])
+            angular_guide_position = float(data[5])
             previous_robot_pos_x = robot_position_x
             previous_robot_pos_z = robot_position_z
             previous_guide_pos = guide_position
+            previous_eul_1 = eul_1
+            previous_angular_guide_position = angular_guide_position
             # print(robot_position ,  " " , str(guide_position))      
         except Exception as e:
             print(e)
@@ -94,6 +101,8 @@ class TCPServer(socket.socket):
             robot_position_x = previous_robot_pos_x
             robot_position_z = previous_robot_pos_z
             guide_position = previous_guide_pos 
+            eul_1 = previous_eul_1
+            angular_guide_position = previous_angular_guide_position
         
 
     def close(self):
@@ -103,12 +112,13 @@ class TCPServer(socket.socket):
 
 class Drawer():
 
-    def __init__(self, guide_direction, diameter_1=False , diameter_2=False , circular_cw=False, circular_ccw=False):
+    def __init__(self, guide_direction, diameter_1=False , diameter_2=False , circular_cw=False, circular_ccw=False, pure_rotation=False):
         self.dir = guide_direction
         self.dia_1 = diameter_1
         self.dia_2 = diameter_2
         self.cir_cw = circular_cw
         self.cir_ccw = circular_ccw
+        self.pure_rot = pure_rotation
         self.circular_motions_radius = 10 * math.sqrt(2);              
         pass
 
@@ -141,6 +151,13 @@ class Drawer():
         elif self.cir_ccw == True:
             self.guide_circle.set_center((25 + self.circular_motions_radius*np.cos(-2 * np.pi * t * FREQUENCY), 22.5 + self.circular_motions_radius*np.sin(-2 * np.pi * t * FREQUENCY)))
             self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z)) 
+
+        elif self.pure_rot == True:
+            self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z))
+            self.cursor_handle.set_xdata([25 + robot_position_x - 10*np.sin(eul_1), 25 + robot_position_x + 10*np.sin(eul_1)])
+            self.cursor_handle.set_ydata([22.5 + robot_position_z - 10*np.cos(eul_1), 22.5 + robot_position_z + 10*np.cos(eul_1)])
+            self.guide_handle.set_xdata([25 - 12*np.sin(angular_guide_position), 25 + 12*np.sin(angular_guide_position)])
+            self.guide_handle.set_ydata([22.5 - 12*np.cos(angular_guide_position), 22.5 + 12*np.cos(angular_guide_position)])
 
         elif self.dir == 'horizontal':
             self.periodic_box.set_width(guide_position)
@@ -226,6 +243,22 @@ class Drawer():
             self.guide_circle = plt.Circle((25+self.circular_motions_radius,22.5), 3, color='k', fill=False)
             self.ax.add_patch(self.guide_circle)
 
+        elif self.pure_rot == True:
+            self.horizontal_line = plt.Line2D([5,45],[22.5,22.5], color='k', linewidth=3)
+            horizonal_line_length = self.horizontal_line.get_xdata()[1] - self.horizontal_line.get_xdata()[0]
+            self.vertical_line = plt.Line2D([25,25],[self.horizontal_line.get_ydata(orig = True)[0]+horizonal_line_length/2,
+                                            self.horizontal_line.get_ydata(orig = True)[0]-horizonal_line_length/2], color='k', linewidth=3)
+            self.cursor_handle = plt.Line2D([25,25],[32.5,12.5], color='r', linewidth=3)
+            self.cursor_circle = plt.Circle((25,22.5), 1.5, color='r')
+            self.guide_handle = plt.Line2D([25,25],[34.5,10.5], color='b', linewidth=3)
+            self.guide_circle = plt.Circle((25,22.5), 2, color='b')
+            self.ax.add_line(self.horizontal_line)
+            self.ax.add_line(self.vertical_line)  
+            self.ax.add_line(self.guide_handle)
+            self.ax.add_patch(self.guide_circle)
+            self.ax.add_patch(self.cursor_circle)
+            self.ax.add_line(self.cursor_handle)  
+
         elif self.dir == 'horizontal':    
             self.horizontal_line = plt.Line2D([5,45],[22.5,22.5], color='k', linewidth=3)
             horizonal_line_length = self.horizontal_line.get_xdata()[1] - self.horizontal_line.get_xdata()[0]
@@ -266,7 +299,7 @@ if __name__ == '__main__':
     server = TCPServer(HOST, PORT)
     server.setup_connection()
     server.start_reading()
-    drawer = Drawer(guide_direction='horizontal')
+    drawer = Drawer(guide_direction='horizontal',pure_rotation=True)
     drawer.start_animation()
     drawer.close()
     server.close()
