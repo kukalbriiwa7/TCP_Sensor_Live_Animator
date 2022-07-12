@@ -6,6 +6,7 @@ import time
 import timeit
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.patches import Arc
 import matplotlib.animation as animation
 import threading
 import numpy as np
@@ -16,7 +17,7 @@ matplotlib.use('Qt5Agg')
 
 HOST = "192.168.1.15" 
 PORT = 8001
-FREQUENCY = 0.15
+FREQUENCY = 0.03
 
 robot_position_x = 0
 robot_position_z = 0
@@ -29,6 +30,8 @@ previous_guide_pos = 0
 goaheadflag = 0
 start_time = 0
 already_go_ahead = False
+
+
 
 class TCPServer(socket.socket):
 
@@ -74,6 +77,7 @@ class TCPServer(socket.socket):
         global previous_angular_guide_position
         global start_time
         global already_go_ahead
+
         # print("byte: ", data)
         data = data.decode().split(";")
         # print("decoded: ", data)
@@ -112,15 +116,46 @@ class TCPServer(socket.socket):
 
 class Drawer():
 
-    def __init__(self, guide_direction, diameter_1=False , diameter_2=False , circular_cw=False, circular_ccw=False, pure_rotation=False):
+
+
+    def __init__(self, guide_direction, diameter_1=False , diameter_2=False , circular_cw=False, circular_ccw=False, pure_rotation=False, u_shaped_maneuver=False, lemniscate_shaped_maneuver = False):
         self.dir = guide_direction
         self.dia_1 = diameter_1
         self.dia_2 = diameter_2
         self.cir_cw = circular_cw
         self.cir_ccw = circular_ccw
         self.pure_rot = pure_rotation
-        self.circular_motions_radius = 10 * math.sqrt(2);              
-        pass
+        self.u_maneuver = u_shaped_maneuver
+        self.lemniscate_maneuver = lemniscate_shaped_maneuver
+        self.circular_motions_radius = 10 * math.sqrt(2); 
+        self.r = 5
+        self.lemniscate_max_radius = 18
+        self.lemniscate_c = math.sqrt((self.lemniscate_max_radius)**2/2)
+
+
+        self.previous_lemniscate_x = self.lemniscate_max_radius
+        self.previous_lemniscate_y = 0             
+        
+
+    def compute_local_normal_angle(self, x, y, x_prev, y_prev):
+
+        c = self.lemniscate_c
+
+        if x == 0 and y == 0:
+            x = x_prev
+            y = y_prev
+
+        local_tangent_slope = -(4*x**3+4*x*y**2-4*c**2*x)/(4*y**3+4*x**2*y+4*c**2*y)
+        local_normal_slope = -1/local_tangent_slope
+
+        if x > 11 or x < -11:
+            theta = np.pi/2
+        else:
+            theta = np.arctan(local_normal_slope)
+
+
+        return theta
+
 
     def start_animation(self):
         self.fig, self.ax = plt.subplots(ncols=1, nrows=1)
@@ -154,10 +189,39 @@ class Drawer():
 
         elif self.pure_rot == True:
             self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z))
-            self.cursor_handle.set_xdata([25 + robot_position_x - 10*np.sin(eul_1), 25 + robot_position_x + 10*np.sin(eul_1)])
-            self.cursor_handle.set_ydata([22.5 + robot_position_z - 10*np.cos(eul_1), 22.5 + robot_position_z + 10*np.cos(eul_1)])
             self.guide_handle.set_xdata([25 - 12*np.sin(angular_guide_position), 25 + 12*np.sin(angular_guide_position)])
             self.guide_handle.set_ydata([22.5 - 12*np.cos(angular_guide_position), 22.5 + 12*np.cos(angular_guide_position)])
+            self.cursor_handle.set_xdata([25 + robot_position_x - 10*np.sin(eul_1), 25 + robot_position_x + 10*np.sin(eul_1)])
+            self.cursor_handle.set_ydata([22.5 + robot_position_z - 10*np.cos(eul_1), 22.5 + robot_position_z + 10*np.cos(eul_1)])
+
+        elif self.u_maneuver == True:
+            theta = np.pi/2*np.sin(2*np.pi*FREQUENCY*(t-1/(4*FREQUENCY))) + np.pi/2
+            x_c = self.circular_motions_radius*np.cos(-theta)
+            y_c = self.circular_motions_radius*np.sin(-theta)
+            self.guide_circle.set_center((25 + x_c, 22.5 + y_c))
+            self.guide_handle.set_xdata([25 + x_c - self.r*np.cos(-theta), 25 + x_c + self.r*np.cos(-theta)])
+            self.guide_handle.set_ydata([22.5 + y_c - self.r*np.sin(-theta), 22.5 + y_c + self.r*np.sin(-theta)])
+
+            self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z))    
+            self.cursor_handle.set_xdata([25 + robot_position_x - self.r*np.sin(eul_1), 25 + robot_position_x + self.r*np.sin(eul_1)])
+            self.cursor_handle.set_ydata([22.5 + robot_position_z - self.r*np.cos(eul_1), 22.5 + robot_position_z + self.r*np.cos(eul_1)])
+
+        elif self.lemniscate_maneuver == True: 
+            x_lemniscate = self.lemniscate_max_radius*np.cos(2*np.pi*FREQUENCY*t)/(1+(np.sin(2*np.pi*FREQUENCY*t)**2))
+            y_lemniscate = self.lemniscate_max_radius*np.sin(2*np.pi*FREQUENCY*t)*np.cos(2*np.pi*FREQUENCY*t)/(1+(np.sin(2*np.pi*FREQUENCY*t)**2))
+            guide_handle_angle = self.compute_local_normal_angle(x_lemniscate,y_lemniscate,self.previous_lemniscate_x,self.previous_lemniscate_y,)
+            self.guide_circle.set_center((25 + x_lemniscate, 22.5 + y_lemniscate))
+            self.guide_handle.set_xdata([25 + x_lemniscate - self.r*np.cos(guide_handle_angle), 25 + x_lemniscate + self.r*np.cos(guide_handle_angle)])
+            self.guide_handle.set_ydata([22.5 + y_lemniscate - self.r*np.sin(guide_handle_angle), 22.5 + y_lemniscate + self.r*np.sin(guide_handle_angle)])
+
+            self.previous_lemniscate_x = x_lemniscate
+            self.previous_lemniscate_y = y_lemniscate
+
+            self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z))    
+            self.cursor_handle.set_xdata([25 + robot_position_x - self.r*np.sin(eul_1), 25 + robot_position_x + self.r*np.sin(eul_1)])
+            self.cursor_handle.set_ydata([22.5 + robot_position_z - self.r*np.cos(eul_1), 22.5 + robot_position_z + self.r*np.cos(eul_1)])
+
+
 
         elif self.dir == 'horizontal':
             self.periodic_box.set_width(guide_position)
@@ -243,6 +307,47 @@ class Drawer():
             self.guide_circle = plt.Circle((25+self.circular_motions_radius,22.5), 3, color='k', fill=False)
             self.ax.add_patch(self.guide_circle)
 
+        elif self.u_maneuver == True:
+            self.horizontal_line = plt.Line2D([5,45],[22.5,22.5], color='k', linewidth=1)
+            horizonal_line_length = self.horizontal_line.get_xdata()[1] - self.horizontal_line.get_xdata()[0]
+            self.vertical_line = plt.Line2D([25,25],[self.horizontal_line.get_ydata(orig = True)[0]+horizonal_line_length/2,
+                                            self.horizontal_line.get_ydata(orig = True)[0]-horizonal_line_length/2], color='k', linewidth=1)
+            self.half_circle = Arc((25,22.5), 2*self.circular_motions_radius, 2*self.circular_motions_radius, theta1=180, theta2=0, color='k', fill=False)
+            self.guide_circle = plt.Circle((25+self.circular_motions_radius,22.5), 1, color='b', fill=True)
+            self.guide_handle = plt.Line2D([25+self.circular_motions_radius-self.r,25+self.circular_motions_radius+self.r],[22.5,22.5], color='b', linewidth=2)
+            self.cursor_handle = plt.Line2D([25,25],[27.5,17.5], color='r', linewidth=1.5)
+            self.cursor_circle = plt.Circle((25,22.5), 1, color='r')
+            self.ax.add_line(self.horizontal_line)
+            self.ax.add_line(self.vertical_line)
+            self.ax.add_patch(self.half_circle)
+            self.ax.add_patch(self.guide_circle)
+            self.ax.add_line(self.guide_handle)
+            self.ax.add_line(self.cursor_handle)
+            self.ax.add_patch(self.cursor_circle)
+
+        elif self.lemniscate_maneuver == True:
+            self.horizontal_line = plt.Line2D([5,45],[22.5,22.5], color='k', linewidth=1)
+            horizonal_line_length = self.horizontal_line.get_xdata()[1] - self.horizontal_line.get_xdata()[0]
+            self.vertical_line = plt.Line2D([25,25],[self.horizontal_line.get_ydata(orig = True)[0]+horizonal_line_length/2,
+                                            self.horizontal_line.get_ydata(orig = True)[0]-horizonal_line_length/2], color='k', linewidth=1)
+            self.guide_circle = plt.Circle((25+self.lemniscate_max_radius,22.5), 1, color='b', fill=True)
+            self.guide_handle = plt.Line2D([25+self.lemniscate_max_radius,25+self.lemniscate_max_radius],[22.5+self.r,22.5-self.r], color='b', linewidth=2)
+            self.cursor_handle = plt.Line2D([25,25],[27.5,17.5], color='r', linewidth=1.5)
+            self.cursor_circle = plt.Circle((25,22.5), 1, color='r')                                
+            delta = 0.025
+            xrange = np.arange(0, 50, delta)
+            yrange = np.arange(0, 50, delta)
+            x, y = np.meshgrid(xrange, yrange)
+            equation = (x-25)**4 + (y-22.5)**4 + 2*(x-25)**2*(y-22.5)**2 - 324*((x-25)**2 - (y-22.5)**2)
+            plt.contour(x, y, equation, [0])
+            plt.show()         
+            self.ax.add_line(self.horizontal_line)
+            self.ax.add_line(self.vertical_line)
+            self.ax.add_patch(self.guide_circle)
+            self.ax.add_line(self.guide_handle)
+            self.ax.add_line(self.cursor_handle)
+            self.ax.add_patch(self.cursor_circle)    
+
         elif self.pure_rot == True:
             self.horizontal_line = plt.Line2D([5,45],[22.5,22.5], color='k', linewidth=3)
             horizonal_line_length = self.horizontal_line.get_xdata()[1] - self.horizontal_line.get_xdata()[0]
@@ -254,8 +359,8 @@ class Drawer():
             self.guide_circle = plt.Circle((25,22.5), 2, color='b')
             self.ax.add_line(self.horizontal_line)
             self.ax.add_line(self.vertical_line)  
-            self.ax.add_line(self.guide_handle)
             self.ax.add_patch(self.guide_circle)
+            self.ax.add_line(self.guide_handle)
             self.ax.add_patch(self.cursor_circle)
             self.ax.add_line(self.cursor_handle)  
 
@@ -299,7 +404,7 @@ if __name__ == '__main__':
     server = TCPServer(HOST, PORT)
     server.setup_connection()
     server.start_reading()
-    drawer = Drawer(guide_direction='horizontal',pure_rotation=True)
+    drawer = Drawer(guide_direction='vertical',lemniscate_shaped_maneuver=True)
     drawer.start_animation()
     drawer.close()
     server.close()
