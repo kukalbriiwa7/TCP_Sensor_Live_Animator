@@ -97,12 +97,12 @@ class TCPServer(socket.socket):
             # start_time = timeit.default_timer()
         #else:
         try:
-            robot_position_x = float(data[1])
+            robot_position_x = -float(data[1])
             robot_position_z = float(data[2])
             robot_eul_1 = -float(data[3])
-            guide_position_x = float(data[4])
+            guide_position_x = -float(data[4])
             guide_position_z = float(data[5])
-            guide_eul_angle = float(data[6])
+            guide_eul_angle = -float(data[6])
 
             previous_robot_pos_x = robot_position_x
             previous_robot_pos_z = robot_position_z
@@ -207,17 +207,14 @@ class Drawer():
             self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z))
             self.guide_handle.set_xdata([25 - 12*np.sin(guide_eul_angle), 25 + 12*np.sin(guide_eul_angle)])
             self.guide_handle.set_ydata([22.5 - 12*np.cos(guide_eul_angle), 22.5 + 12*np.cos(guide_eul_angle)])
-            self.cursor_handle.set_xdata([25 + robot_position_x - 10*np.sin(robot_eul_1), 25 + robot_position_x + 10*np.sin(robot_eul_1)])
-            self.cursor_handle.set_ydata([22.5 + robot_position_z - 10*np.cos(robot_eul_1), 22.5 + robot_position_z + 10*np.cos(robot_eul_1)])
+            self.cursor_handle.set_xdata([25 + robot_position_x + 10*np.sin(robot_eul_1), 25 + robot_position_x - 10*np.sin(robot_eul_1)])
+            self.cursor_handle.set_ydata([22.5 + robot_position_z + 10*np.cos(robot_eul_1), 22.5 + robot_position_z - 10*np.cos(robot_eul_1)])
 
         elif self.u_maneuver == True:
-            # theta = 2*np.pi/6*np.sin(2*np.pi*FREQUENCY*(t-1/(4*FREQUENCY))) + np.pi/2
-            x_c = self.radius*np.cos(-guide_eul_angle)
-            y_c = self.radius/2 + self.radius*np.sin(-guide_eul_angle)
-            # y_c = self.circular_motions_radius*np.sin(-theta)
-            self.guide_circle.set_center((25 + x_c, 22.5 + y_c))
-            self.guide_handle.set_xdata([25 + x_c - self.r*np.cos(-guide_eul_angle), 25 + x_c + self.r*np.cos(-guide_eul_angle)])
-            self.guide_handle.set_ydata([22.5 + y_c - self.r*np.sin(-guide_eul_angle), 22.5 + y_c + self.r*np.sin(-guide_eul_angle)])
+
+            self.guide_circle.set_center((25 + guide_position_x, 22.5 + guide_position_z))
+            self.guide_handle.set_xdata([25 + guide_position_x - self.r*np.sin(guide_eul_angle), 25 + guide_position_x + self.r*np.sin(guide_eul_angle)])
+            self.guide_handle.set_ydata([22.5 + guide_position_z - self.r*np.cos(guide_eul_angle), 22.5 + guide_position_z + self.r*np.cos(guide_eul_angle)])
 
             self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z))    
             self.cursor_handle.set_xdata([25 + robot_position_x - self.r*np.sin(robot_eul_1), 25 + robot_position_x + self.r*np.sin(robot_eul_1)])
@@ -344,13 +341,13 @@ class Drawer():
             self.radius = self.radius * 100
             axis_length = self.radius * 2/np.sqrt(2)
 
-            self.horizontal_line = plt.Line2D([25-axis_length,25+axis_length],[22.5,22.5], color='k', linewidth=3)
+            self.horizontal_line = plt.Line2D([25-axis_length,25+axis_length],[22.5,22.5], color='k', linewidth=1)
             horizonal_line_length = 2*axis_length
             self.vertical_line = plt.Line2D([25,25],[self.horizontal_line.get_ydata(orig = True)[0]+horizonal_line_length/2,
-                                            self.horizontal_line.get_ydata(orig = True)[0]-horizonal_line_length/2], color='k', linewidth=3)
+                                            self.horizontal_line.get_ydata(orig = True)[0]-horizonal_line_length/2], color='k', linewidth=1)
 
-            self.half_circle = Arc((25,22.5+self.radius/2), 2*self.radius, 2*self.radius, theta1 = np.rad2deg(3*np.pi/2 - self._amplitude) ,
-                                     theta2=-np.rad2deg(np.pi/2 - self._amplitude), color='k', fill=False)
+            self.half_circle = Arc((25,22.5+self.radius/2), 2*self.radius, 2*self.radius, theta1 = np.rad2deg(3*np.pi/2 - self._amplitude),
+                                     theta2=-np.rad2deg(np.pi/2 - self._amplitude), color='k', fill=False, linewidth=3)
 
             self.guide_circle = plt.Circle((25+self.radius*np.cos(-(np.pi/2 - self._amplitude)),
                                             22.5 + self.radius/2 + self.radius*np.sin(-(np.pi/2 - self._amplitude))), 1, color='b', fill=True)
@@ -369,7 +366,6 @@ class Drawer():
             self.vertical_line_center = plt.Line2D([25,25],[self.horizontal_line_center.get_ydata(orig = True)[0]+horizonal_line__center_length/2,
                                             self.horizontal_line_center.get_ydata(orig = True)[0]-horizonal_line__center_length/2], color='k', linewidth=4)
 
-            
             self.ax.add_line(self.horizontal_line)
             self.ax.add_line(self.vertical_line)
             self.ax.add_patch(self.half_circle)
@@ -482,7 +478,8 @@ if __name__ == '__main__':
     server = TCPServer(HOST, PORT)
     server.setup_connection()
     server.start_reading()
-    drawer = Drawer(lemniscate_shaped_maneuver=True, des_motion_amplitude=0.2)
+    drawer = Drawer(u_shaped_maneuver=True, des_motion_amplitude=np.pi/3, u_maneuver_radius = 0.2 * np.sqrt(2)/2)
+    # drawer = Drawer(circular_cw=True, des_motion_amplitude=0.2)
     drawer.start_animation()
     drawer.close()
     server.close()
