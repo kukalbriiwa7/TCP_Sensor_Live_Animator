@@ -189,30 +189,33 @@ class Drawer():
 
         elif self.cir_cw == True:
             self.guide_circle.set_center((25 + guide_position_x, 22.5 + guide_position_z))
-            self.guide_handle.set_xdata([25 + guide_position_x - self.r*np.cos(guide_eul_angle), 25 + guide_position_x + self.r*np.cos(guide_eul_angle)])
-            self.guide_handle.set_ydata([22.5 + guide_position_z - self.r*np.sin(guide_eul_angle), 22.5 + guide_position_z + self.r*np.sin(guide_eul_angle)])
+            self.guide_handle.set_xdata([25 + guide_position_x - self.r*np.sin(guide_eul_angle), 25 + guide_position_x + self.r*np.sin(guide_eul_angle)])
+            self.guide_handle.set_ydata([22.5 + guide_position_z - self.r*np.cos(guide_eul_angle), 22.5 + guide_position_z + self.r*np.cos(guide_eul_angle)])
             self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z))
             self.cursor_handle.set_xdata([25 + robot_position_x - self.r*np.sin(robot_eul_1), 25 + robot_position_x + self.r*np.sin(robot_eul_1)])
             self.cursor_handle.set_ydata([22.5 + robot_position_z - self.r*np.cos(robot_eul_1), 22.5 + robot_position_z + self.r*np.cos(robot_eul_1)]) 
 
         elif self.cir_ccw == True:
             self.guide_circle.set_center((25 + guide_position_x, 22.5 + guide_position_z))
-            self.guide_handle.set_xdata([25 + guide_position_x - self.r*np.cos(guide_eul_angle), 25 + guide_position_x + self.r*np.cos(guide_eul_angle)])
-            self.guide_handle.set_ydata([22.5 + guide_position_z - self.r*np.sin(guide_eul_angle), 22.5 + guide_position_z + self.r*np.sin(guide_eul_angle)])
+            self.guide_handle.set_xdata([25 + guide_position_x - self.r*np.sin(guide_eul_angle), 25 + guide_position_x + self.r*np.sin(guide_eul_angle)])
+            self.guide_handle.set_ydata([22.5 + guide_position_z - self.r*np.cos(guide_eul_angle), 22.5 + guide_position_z + self.r*np.cos(guide_eul_angle)])
             self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z))
             self.cursor_handle.set_xdata([25 + robot_position_x - self.r*np.sin(robot_eul_1), 25 + robot_position_x + self.r*np.sin(robot_eul_1)])
             self.cursor_handle.set_ydata([22.5 + robot_position_z - self.r*np.cos(robot_eul_1), 22.5 + robot_position_z + self.r*np.cos(robot_eul_1)]) 
 
         elif self.pure_rot == True:
             self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z))
+
             self.guide_handle.set_xdata([25 - 12*np.sin(guide_eul_angle), 25 + 12*np.sin(guide_eul_angle)])
             self.guide_handle.set_ydata([22.5 - 12*np.cos(guide_eul_angle), 22.5 + 12*np.cos(guide_eul_angle)])
+
             self.cursor_handle.set_xdata([25 + robot_position_x + 10*np.sin(robot_eul_1), 25 + robot_position_x - 10*np.sin(robot_eul_1)])
             self.cursor_handle.set_ydata([22.5 + robot_position_z + 10*np.cos(robot_eul_1), 22.5 + robot_position_z - 10*np.cos(robot_eul_1)])
 
         elif self.u_maneuver == True:
 
             self.guide_circle.set_center((25 + guide_position_x, 22.5 + guide_position_z))
+
             self.guide_handle.set_xdata([25 + guide_position_x - self.r*np.sin(guide_eul_angle), 25 + guide_position_x + self.r*np.sin(guide_eul_angle)])
             self.guide_handle.set_ydata([22.5 + guide_position_z - self.r*np.cos(guide_eul_angle), 22.5 + guide_position_z + self.r*np.cos(guide_eul_angle)])
 
@@ -223,8 +226,9 @@ class Drawer():
         elif self.lemniscate_maneuver == True: 
 
             self.guide_circle.set_center((25 + guide_position_x, 22.5 + guide_position_z))
-            self.guide_handle.set_xdata([25 + guide_position_x - self.r*np.cos(guide_eul_angle), 25 + guide_position_x + self.r*np.cos(guide_eul_angle)])
-            self.guide_handle.set_ydata([22.5 + guide_position_z - self.r*np.sin(guide_eul_angle), 22.5 + guide_position_z + self.r*np.sin(guide_eul_angle)])
+
+            self.guide_handle.set_xdata([25 + guide_position_x - self.r*np.sin(guide_eul_angle), 25 + guide_position_x + self.r*np.sin(guide_eul_angle)])
+            self.guide_handle.set_ydata([22.5 + guide_position_z - self.r*np.cos(guide_eul_angle), 22.5 + guide_position_z + self.r*np.cos(guide_eul_angle)])
 
             self.cursor_circle.set_center((25 + robot_position_x, 22.5 + robot_position_z))    
             self.cursor_handle.set_xdata([25 + robot_position_x - self.r*np.sin(robot_eul_1), 25 + robot_position_x + self.r*np.sin(robot_eul_1)])
@@ -262,7 +266,7 @@ class Drawer():
                                             self.horizontal_line.get_ydata(orig = True)[0]-horizonal_line_length/2], color='k', linewidth=3)
 
             self.cursor_circle = plt.Circle((25,22.5), 2, color='b')
-            self.diagonal_line_1 = plt.Line2D([25-self._amplitude*math.sqrt(2)/2,25+self._amplitude*math.sqrt(2)/2],[22.5-self._amplitude*math.sqrt(2)/2,22.5+self._amplitude*math.sqrt(2)/2], color='k', linestyle='--')
+            self.diagonal_line_1 = plt.Line2D([25-self._amplitude*math.sqrt(2)/2,25+self._amplitude*math.sqrt(2)/2],[22.5+self._amplitude*math.sqrt(2)/2,22.5-self._amplitude*math.sqrt(2)/2], color='k', linestyle='--')
             self.guide_circle = plt.Circle((25,22.5), 3, color='k', fill=False)
 
             self.ax.add_line(self.horizontal_line)
@@ -279,7 +283,7 @@ class Drawer():
                                             self.horizontal_line.get_ydata(orig = True)[0]-horizonal_line_length/2], color='k', linewidth=3)
 
             self.cursor_circle = plt.Circle((25,22.5), 2, color='b')
-            self.diagonal_line_2 = plt.Line2D([25-self._amplitude*math.sqrt(2)/2,25+self._amplitude*math.sqrt(2)/2],[22.5+self._amplitude*math.sqrt(2)/2,22.5-self._amplitude*math.sqrt(2)/2], color='k', linestyle='--')
+            self.diagonal_line_2 = plt.Line2D([25-self._amplitude*math.sqrt(2)/2,25+self._amplitude*math.sqrt(2)/2],[22.5-self._amplitude*math.sqrt(2)/2,22.5+self._amplitude*math.sqrt(2)/2], color='k', linestyle='--')
             self.guide_circle = plt.Circle((25,22.5), 3, color='k', fill=False)
 
             self.ax.add_line(self.horizontal_line)
@@ -304,7 +308,7 @@ class Drawer():
 
             self.path_circle = plt.Circle((25,22.5), self.circular_motions_radius, color='k', fill=False, linestyle='--')
             self.ax.add_patch(self.path_circle)
-
+            
             self.ax.add_line(self.horizontal_line)
             self.ax.add_line(self.vertical_line)
             self.ax.add_patch(self.cursor_circle)
@@ -478,8 +482,8 @@ if __name__ == '__main__':
     server = TCPServer(HOST, PORT)
     server.setup_connection()
     server.start_reading()
-    drawer = Drawer(u_shaped_maneuver=True, des_motion_amplitude=np.pi/3, u_maneuver_radius = 0.2 * np.sqrt(2)/2)
-    # drawer = Drawer(circular_cw=True, des_motion_amplitude=0.2)
+    drawer = Drawer(u_shaped_maneuver=True, des_motion_amplitude=np.pi/4, u_maneuver_radius = 0.15 * np.sqrt(2)/2)
+    # drawer = Drawer(lemniscate_shaped_maneuver=True, des_motion_amplitude=0.2)
     drawer.start_animation()
     drawer.close()
     server.close()
